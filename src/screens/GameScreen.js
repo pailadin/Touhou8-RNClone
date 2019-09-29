@@ -1,6 +1,9 @@
 import React, { PureComponent } from "react";
 import { Button, StyleSheet, View } from "react-native";
+import { vw, vh } from "react-native-expo-viewport-units";
 
+import Player from "#/Player";
+import { PLAY_AREA_HEIGHT_VH, PLAY_AREA_WIDTH_VW } from "~/constants/dimensions";
 import STAGE_INTRO from "$/music/th08_02-intro.mp3";
 import STAGE_LOOP from "$/music/th08_02-loop.mp3";
 import BOSS_INTRO from "$/music/th08_03-intro.mp3";
@@ -13,6 +16,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  playarea: {
+    backgroundColor: "#111111",
+    borderColor: "white",
+    borderWidth: 5,
+    height: vh(PLAY_AREA_HEIGHT_VH),
+    width: vw(PLAY_AREA_WIDTH_VW),
+    position: "absolute",
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
 });
 
 export default class GameScreen extends PureComponent {
@@ -45,18 +59,14 @@ export default class GameScreen extends PureComponent {
   render() {
     return (
       <View style={styles.container}>
-        <Button
-          title="Change track"
-          onPress={this.toggleMusicTest}
-        />
+        <View style={styles.playarea}>
+          <Button
+            title="Change track"
+            onPress={this.toggleMusicTest}
+          />
 
-        {/* <Music
-          trackIndex={this.state.i}
-          tracks={[
-            { intro: STAGE_INTRO, loop: STAGE_LOOP },
-            { intro: BOSS_INTRO, loop: BOSS_LOOP },
-          ]}
-        /> */}
+          <Player />
+        </View>
       </View>
     )
   }
