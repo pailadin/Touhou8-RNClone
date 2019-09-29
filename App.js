@@ -2,6 +2,7 @@ import React, { PureComponent } from "react";
 import { createAppContainer } from "react-navigation";
 import { createStackNavigator } from "react-navigation-stack";
 
+import MusicController from "~/controllers/MusicController";
 import WelcomeScreen from "~/screens/WelcomeScreen";
 import GameScreen from "~/screens/GameScreen";
 
@@ -11,6 +12,10 @@ const RootStack = createStackNavigator({
   },
   Game: {
     screen: GameScreen,
+    navigationOptions: {
+      title: "Game",
+      headerLeft: null,
+    },
   },
 }, {
   headerMode: "none",
@@ -24,6 +29,10 @@ const AppContainer = createAppContainer(RootStack);
 
 export default class App extends PureComponent {
   render() {
-    return <AppContainer />;
+    return (
+      <MusicController render={({ loadTracks}) => (
+        <AppContainer screenProps={{ loadTracks }}/>
+      )} />
+    );
   }
 }
