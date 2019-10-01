@@ -1,7 +1,6 @@
 import React, { PureComponent } from "react";
 import PropTypes from "prop-types";
 import { Audio } from "expo-av";
-import { isArray, get } from "lodash";
 
 const MUSIC_FILE = PropTypes.number; // yes really
 
