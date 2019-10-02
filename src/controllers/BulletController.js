@@ -1,9 +1,10 @@
 import React, { PureComponent } from "react";
-import { vw, vh } from "react-native-expo-viewport-units";
 import PropTypes from "prop-types";
+import { get } from "lodash";
+import UniqueString from "uuid/v1";
 
-import Bullet from "#/bullets/_Bullet";
-import { PLAY_AREA_HEIGHT_VH, PLAY_AREA_WIDTH_VW, MAX_X, MAX_Y, MAX_Y_PLAYER } from "~/constants/dimensions";
+import Bullets from "#/bullets/";
+import BULLET_TYPES from "~/constants/bulletTypes"
 
 export default class BulletController extends PureComponent {
   static propTypes = {
@@ -15,44 +16,25 @@ export default class BulletController extends PureComponent {
     playerBottom: PropTypes.number.isRequired,
   }
 
-  constructor(props) {
-    super(props);
+  state = { bullets: [] }
 
-    const getRandomX = () => (Math.floor(Math.random() * MAX_X) + 1) * (Math.random() > 0.5 ? 1 : -1);
-    const getRandomY = () => (Math.floor(Math.random() * MAX_Y) + 1) * (Math.random() > 0.5 ? 1 : -1);
-
-    const aimedAtPlayer = [...Array(5)].map((_, i) => ({
-      key: `aimedAtPlayer${i}`,
-      fromX: getRandomX(),
-      fromY: getRandomY(),
-      toX: "PLAYER",
-      toY: "PLAYER",
-    }));
-
-    const aimedAtBottom = [...Array(5)].map((_, i) => ({
-      key: `aimedAtBottom${i}`,
-      fromX: getRandomX(),
-      fromY: getRandomY(),
-      toX: Math.random() * MAX_X,
-      toY: MAX_Y,
-    }));
-
-    const randomlyAimed = [...Array(5)].map((_, i) => ({
-      key: `randomlyAimed${i}`,
-      fromX: getRandomX(),
-      fromY: getRandomY(),
-      toX: "RANDOM",
-      toY: "RANDOM",
-    }));
-
-    this.state = { bullets: [
-      ...aimedAtPlayer,
-      ...aimedAtBottom,
-      ...randomlyAimed,
-    ] };
+  componentDidMount() {
+    this.spawn([
+      { type: BULLET_TYPES.random },
+      { type: BULLET_TYPES.aimedAtPlayer },
+      { type: BULLET_TYPES.aimedAtBottom },
+    ])
   }
 
-  removeBullet = i => {
+  // TODO setState is async. Maybe will not work well if multiple spawns occur at the same time.
+  spawn = (newBullets = []) => {
+    this.setState({ bullets: [ ...this.state.bullets, ...[].concat(newBullets).map(({
+      type = BULLET_TYPES.random,
+      ...rest
+    }) => ({ key: UniqueString(), type, ...rest }))]});
+  }
+
+  despawn = i => {
     const indexToRemove = this.state.bullets.findIndex(x => x.key === i);
     if (indexToRemove >= 0) {
       this.setState({ bullets: [
@@ -63,28 +45,35 @@ export default class BulletController extends PureComponent {
   }
 
   renderBullets = () => {    
-    return this.state.bullets.map(({ key, ...rest }) =>
-      <Bullet
-        key={key}
-        id={key}
-        {...rest}
-        removeBullet={this.removeBullet}
-        playerX={this.props.playerX}
-        playerY={this.props.playerY}
-        playerLeft={this.props.playerLeft}
-        playerRight={this.props.playerRight}
-        playerTop={this.props.playerTop}
-        playerBottom={this.props.playerBottom}
-      />
-    )
+    return this.state.bullets.map(({ key, type, ...rest }) => {
+      const Component = get(Bullets, type, Bullets[BULLET_TYPES.random]);
+
+      return (
+        <Component
+          key={key}
+          id={key}
+          {...rest}
+          despawn={this.despawn}
+          playerX={this.props.playerX}
+          playerY={this.props.playerY}
+          playerLeft={this.props.playerLeft}
+          playerRight={this.props.playerRight}
+          playerTop={this.props.playerTop}
+          playerBottom={this.props.playerBottom}
+        />
+      );
+    });
   }
 
-  render() {
+  render() {    
     return (
       <>
         {this.renderBullets()}
 
-        {this.props.render && this.props.render()}
+        {this.props.render && this.props.render({
+          ...this.props,
+          spawnBullet: spawn,
+        })}
       </>
     )
   }

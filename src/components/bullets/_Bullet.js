@@ -6,6 +6,8 @@ import _ from "lodash";
 import { intersect, distance } from "mathjs"
 
 import { MAX_X, MAX_Y, LONG_DIAGONAL_LENGTH } from "~/constants/dimensions";
+import SPECIAL_XY_VALUES from "~/constants/bulletSpecialXYValues";
+import { getRandomX, getRandomY } from "~/utils/randomXY"
 
 const INNER_RADIUS = vh(1.5);
 const OUTER_RADIUS = INNER_RADIUS + vh(2);
@@ -13,7 +15,7 @@ const HITBOX_SIZE = vh(1.5);
 
 const styles = StyleSheet.create({
   outer: {
-    backgroundColor: "red",
+    backgroundColor: "blue",
     width: OUTER_RADIUS,
     height: OUTER_RADIUS,
     borderRadius: OUTER_RADIUS,
@@ -33,8 +35,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   hitbox: {
-    // backgroundColor: "transparent",
-    backgroundColor: "blue",
+    backgroundColor: "transparent",
     position: "absolute",
     width: HITBOX_SIZE,
     height: HITBOX_SIZE,
@@ -45,28 +46,28 @@ const styles = StyleSheet.create({
 const calculateToXY = ({
   fromX,
   fromY,
-  toX = "RANDOM",
-  toY = "RANDOM",
+  toX = SPECIAL_XY_VALUES.random,
+  toY = SPECIAL_XY_VALUES.random,
   playerX: currentPlayerX,
   playerY: currentPlayerY
 }, initialPlayerX = currentPlayerX, initialPlayerY = currentPlayerY) => {
   if (!_.isFinite(toX)) {
     toX = String(toX);
 
-    if (toX === "PLAYER") {
+    if (toX === SPECIAL_XY_VALUES.player) {
       toX = initialPlayerX;
     } else {
-      toX = (Math.floor(Math.random() * MAX_X)) * (Math.random() > 0.5 ? 1 : -1);
+      toX = getRandomX();
     }
   }
 
   if (!_.isFinite(toY)) {
     toY = String(toY);
 
-    if (toY === "PLAYER") {
+    if (toY === SPECIAL_XY_VALUES.player) {
       toY = initialPlayerY;
     } else {
-      toY = (Math.floor(Math.random() * MAX_Y)) * (Math.random() > 0.5 ? 1 : -1);
+      toY = getRandomY();
     }
   }
 
@@ -108,18 +109,24 @@ export default class Bullet extends Component {
     // If not aiming at the player, pass at least ONE point on an edge for best results:
     toX: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), // Reminder: Use state version of this:
     toY: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), // Reminder: Use state version of this.
+    outerColor: PropTypes.string,
+    innerColor: PropTypes.string,
+    hitboxColor: PropTypes.string,
     playerX: PropTypes.number.isRequired,
     playerY: PropTypes.number.isRequired,
     playerLeft: PropTypes.number.isRequired,
     playerRight: PropTypes.number.isRequired,
     playerTop: PropTypes.number.isRequired,
     playerBottom: PropTypes.number.isRequired,
-    removeBullet: PropTypes.func.isRequired,
+    despawn: PropTypes.func.isRequired,
   }
 
   static defaultProps = {
     fromX: 0,
     fromY: -MAX_Y,
+    outerColor: "blue",
+    innerColor: "white",
+    hitboxColor: "transparent",
   }
 
   constructor(props) {
@@ -180,13 +187,13 @@ export default class Bullet extends Component {
     // )) {
     //   DELETE_MESSAGE();
 
-    //   return this.props.removeBullet(this.props.id);
+    //   return this.props.despawn(this.props.id);
     // }
 
     if (Math.abs(actualXPos) >= MAX_X || Math.abs(actualYPos) >= MAX_Y) {
       // DELETE_MESSAGE("OUT OF BOUNDS");
 
-      this.props.removeBullet(this.props.id);
+      this.props.despawn(this.props.id);
     }
   }
 
@@ -261,10 +268,11 @@ export default class Bullet extends Component {
         style={[
           styles.outer,
           translateStyle,
+          { backgroundColor: this.props.outerColor }
         ]}
       >
-        <View style={styles.inner}>
-          <View style={styles.hitbox} />
+        <View style={[styles.inner, { backgroundColor: this.props.innerColor }]}>
+          <View style={[styles.hitbox, { backgroundColor: this.props.hitboxColor }]} />
         </View>
       </Animated.View>
     );
