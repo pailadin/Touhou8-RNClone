@@ -19,9 +19,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 2000,
   },
   image: {
     position: "absolute",
+    zIndex: 2001,
   },
   hitbox: {
     backgroundColor: "red",
@@ -31,28 +33,45 @@ const styles = StyleSheet.create({
     borderRadius: HITBOX_SIZE, // Cosmetic. Still treated as a box.
     borderWidth: 1,
     borderColor: "#FFF",
-    zIndex: 1100,
+    zIndex: 2002,
   }
 });
 
+const getPlayerHitboxValues = (x, y) => {
+  const HALF_HITBOX_SIZE = HITBOX_SIZE / 2;
+
+  const playerLeft = x - HALF_HITBOX_SIZE;
+  const playerRight = x + HALF_HITBOX_SIZE;
+  const playerTop = y - HALF_HITBOX_SIZE;
+  const playerBottom = y + HALF_HITBOX_SIZE;
+
+  return { playerLeft, playerRight, playerTop, playerBottom };
+}
+
 export default class Player extends PureComponent {
   static propTypes = {
-    x: PropTypes.number.isRequired,
-    y: PropTypes.number.isRequired,
-    updatePlayerLocation: PropTypes.func.isRequired,
+    initialX: PropTypes.number,
+    initialY: PropTypes.number,
   }
 
   static defaultProps = {
-    updatePlayerLocation: () => null
+    initialX: 0,
+    initialY: MAX_Y_PLAYER - vh(3),
   }
+
+  updatePlayerLocation = (x, y) => this.setState({
+    playerX: x,
+    playerY: y,
+    ...getPlayerHitboxValues(x, y),
+  });
 
   constructor(props) {
     super(props);
 
-    this.gestureOffset = { x: this.props.x, y: this.props.y };
-    this.gestureValue = new Animated.ValueXY({ x: this.props.x, y: this.props.y });
+    this.gestureOffset = { x: this.props.initialX, y: this.props.initialY };
+    this.gestureValue = new Animated.ValueXY({ x: this.props.initialX, y: this.props.initialY });
     this.gestureValue.addListener(({ x, y }) => {
-      this.props.updatePlayerLocation(x, y);
+      this.updatePlayerLocation(x, y);
     });
 
     this.panResponder = PanResponder.create({
@@ -84,6 +103,12 @@ export default class Player extends PureComponent {
         this.gestureOffset.y += dy;
       },
     });
+
+    this.state = {
+      playerX: this.props.initialX,
+      playerY: this.props.initialY,
+      ...getPlayerHitboxValues(this.props.initialX, this.props.initialY),
+    };
   }
 
   render() {
@@ -103,6 +128,8 @@ export default class Player extends PureComponent {
 
           <View style={styles.hitbox} />
         </Animated.View>
+
+        {this.props.render({ ...this.state })}
       </>
     );
   }

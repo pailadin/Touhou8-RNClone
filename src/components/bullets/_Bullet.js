@@ -50,8 +50,6 @@ const calculateToXY = ({
   playerX: currentPlayerX,
   playerY: currentPlayerY
 }, initialPlayerX = currentPlayerX, initialPlayerY = currentPlayerY) => {
-  const isShootingAtPlayer = toX === "PLAYER" && toY === "PLAYER";
-
   if (!_.isFinite(toX)) {
     toX = String(toX);
 
@@ -72,37 +70,34 @@ const calculateToXY = ({
     }
   }
 
-  if (isShootingAtPlayer) {
-    // Find a point at the edge of the play area to aim the bullet at:
-    const startingPoint = [fromX, fromY];
-    const currentLineSegment = [startingPoint, [toX, toY]];
-    let topDistance, bottomDistance, leftDistance, rightDistance;
+  // Find a point at the edge of the play area to aim the bullet at:
+  const startingXY = [fromX, fromY];
+  const endingXY = [toX, toY];
+  const currentLineSegment = [startingXY, endingXY];
+  let topDistance, bottomDistance, leftDistance, rightDistance;
 
-    const topIntersection = intersect(...currentLineSegment, [-LONG_DIAGONAL_LENGTH, -MAX_Y], [LONG_DIAGONAL_LENGTH, -MAX_Y]);
-    const bottomIntersection = intersect(...currentLineSegment, [-LONG_DIAGONAL_LENGTH, MAX_Y], [LONG_DIAGONAL_LENGTH, MAX_Y]);
-    const leftIntersection = intersect(...currentLineSegment, [-MAX_X, -LONG_DIAGONAL_LENGTH], [-MAX_X, LONG_DIAGONAL_LENGTH]);
-    const rightIntersection = intersect(...currentLineSegment, [MAX_X, -LONG_DIAGONAL_LENGTH], [MAX_X, LONG_DIAGONAL_LENGTH]);
+  const topIntersection = intersect(...currentLineSegment, [-LONG_DIAGONAL_LENGTH, -MAX_Y], [LONG_DIAGONAL_LENGTH, -MAX_Y]);
+  const bottomIntersection = intersect(...currentLineSegment, [-LONG_DIAGONAL_LENGTH, MAX_Y], [LONG_DIAGONAL_LENGTH, MAX_Y]);
+  const leftIntersection = intersect(...currentLineSegment, [-MAX_X, -LONG_DIAGONAL_LENGTH], [-MAX_X, LONG_DIAGONAL_LENGTH]);
+  const rightIntersection = intersect(...currentLineSegment, [MAX_X, -LONG_DIAGONAL_LENGTH], [MAX_X, LONG_DIAGONAL_LENGTH]);
 
-    if (topIntersection) topDistance = distance(startingPoint, topIntersection);
-    if (bottomIntersection) bottomDistance = distance(startingPoint, bottomIntersection);
-    if (leftIntersection) leftDistance = distance(startingPoint, leftIntersection);
-    if (rightIntersection) rightDistance = distance(startingPoint, rightIntersection);
+  if (topIntersection) topDistance = distance(endingXY, topIntersection);
+  if (bottomIntersection) bottomDistance = distance(endingXY, bottomIntersection);
+  if (leftIntersection) leftDistance = distance(endingXY, leftIntersection);
+  if (rightIntersection) rightDistance = distance(endingXY, rightIntersection);
 
-    const playerXY = _.get(
-      _.sortBy([
-        [topDistance, topIntersection],
-        [bottomDistance, bottomIntersection],
-        [leftDistance, leftIntersection],
-        [rightDistance, rightIntersection],
-      ], [x => x[0]]),
-      "[0]",
-      [0, MAX_Y],
-    );
+  const playerXY = _.get(
+    _.sortBy([
+      [topDistance, topIntersection],
+      [bottomDistance, bottomIntersection],
+      [leftDistance, leftIntersection],
+      [rightDistance, rightIntersection],
+    ].filter(x => x[0]), [x => x[0]]),
+    "[0]",
+    [null, [toX, toY]],
+  );
 
-    return { toX: playerXY[1][0], toY: playerXY[1][1] };
-  }
-  
-  return { toX, toY };
+  return { toX: playerXY[1][0], toY: playerXY[1][1] };
 }
 
 export default class Bullet extends Component {
@@ -110,7 +105,7 @@ export default class Bullet extends Component {
     id: PropTypes.string.isRequired,
     fromX: PropTypes.number,
     fromY: PropTypes.number,
-    // If not aiming at the player, pass at least ONE point on an edge:
+    // If not aiming at the player, pass at least ONE point on an edge for best results:
     toX: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), // Reminder: Use state version of this:
     toY: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), // Reminder: Use state version of this.
     playerX: PropTypes.number.isRequired,
@@ -125,7 +120,6 @@ export default class Bullet extends Component {
   static defaultProps = {
     fromX: 0,
     fromY: -MAX_Y,
-    removeBullet: () => null,
   }
 
   constructor(props) {
@@ -163,21 +157,21 @@ export default class Bullet extends Component {
     const BULLET_Y_START = actualYPos - HALF_HITBOX_SIZE;
     const BULLET_Y_END = actualYPos + HALF_HITBOX_SIZE;
 
-    const DELETE_MESSAGE = (message = "COLLISION") => console.log(`${message}:`, {
-      id: this.props.id,
-      playerLeft,
-      playerRight,
-      playerTop,
-      playerBottom,
-      BULLET_X_START,
-      BULLET_X_END,
-      BULLET_Y_START,
-      BULLET_Y_END,
-      MAX_X,
-      MAX_Y,
-    });
+    // const DELETE_MESSAGE = (message = "COLLISION") => console.log(`${message}:`, {
+    //   id: this.props.id,
+    //   playerLeft,
+    //   playerRight,
+    //   playerTop,
+    //   playerBottom,
+    //   BULLET_X_START,
+    //   BULLET_X_END,
+    //   BULLET_Y_START,
+    //   BULLET_Y_END,
+    //   MAX_X,
+    //   MAX_Y,
+    // });
 
-    // Should probably be disabled until we can find a way to get the bullet x and y synchronously:
+    // Should probably be disabled until we can find a way to make this work reliably:
     // if (!(
     //   (playerRight < BULLET_X_START) ||
     //   (playerLeft > BULLET_X_END) ||
@@ -190,7 +184,7 @@ export default class Bullet extends Component {
     // }
 
     if (Math.abs(actualXPos) >= MAX_X || Math.abs(actualYPos) >= MAX_Y) {
-      DELETE_MESSAGE("OUT OF BOUNDS");
+      // DELETE_MESSAGE("OUT OF BOUNDS");
 
       this.props.removeBullet(this.props.id);
     }

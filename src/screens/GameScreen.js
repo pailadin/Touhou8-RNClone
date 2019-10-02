@@ -30,29 +30,11 @@ const styles = StyleSheet.create({
   }
 });
 
-const getPlayerHitboxValues = (x, y) => {
-  const HALF_HITBOX_SIZE = PLAYER_HITBOX_SIZE / 2;
-
-  const playerLeft = x - HALF_HITBOX_SIZE;
-  const playerRight = x + HALF_HITBOX_SIZE;
-  const playerTop = y - HALF_HITBOX_SIZE;
-  const playerBottom = y + HALF_HITBOX_SIZE;
-
-  return { playerLeft, playerRight, playerTop, playerBottom };
-}
-
 export default class GameScreen extends PureComponent {
   state = {
     //
     testMusic: 0,
     //
-    playerX: 0,
-    playerY: MAX_Y_PLAYER - vh(3),
-    ...getPlayerHitboxValues(0, MAX_Y_PLAYER - vh(3)),
-  }
-
-  updatePlayerLocation = (playerX, playerY) => {
-    this.setState({ playerX, playerY, ...getPlayerHitboxValues(playerX, playerY) });
   }
 
   componentWillMount() {
@@ -80,27 +62,22 @@ export default class GameScreen extends PureComponent {
   render() {
     return (
       <View style={styles.container}>
-        <View style={styles.playarea}>
-          {/* <Button
-            title="Change track"
-            onPress={this.toggleMusicTest}
-          /> */}
-
-          <BulletController
-            playerX={this.state.playerX}
-            playerY={this.state.playerY}
-            playerLeft={this.state.playerLeft}
-            playerRight={this.state.playerRight}
-            playerTop={this.state.playerTop}
-            playerBottom={this.state.playerBottom}
-            canvasContext={this.canvasContext}
-          />
-        </View>
-
         <Player
-          x={this.state.playerX}
-          y={this.state.playerY}
           updatePlayerLocation={this.updatePlayerLocation}
+          render={playerState => {
+            // console.log("playerState:", playerState);
+            
+            return (
+              <View style={styles.playarea}>
+                {/* <Button
+                  title="Change track"
+                  onPress={this.toggleMusicTest}
+                /> */}
+
+                <BulletController {...playerState}  />
+              </View>
+            )
+          }}
         />
       </View>
     )
