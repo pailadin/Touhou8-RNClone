@@ -1,5 +1,5 @@
 import React, { PureComponent } from "react";
-import Bullet from "~/components/bullets/_Bullet";
+import Bullet from "#/bullets/_Bullet";
 import SPECIAL_XY_VALUES from "~/constants/bulletSpecialXYValues";
 
 export default class RandomBullet extends PureComponent {
