@@ -69,7 +69,7 @@ export default class Enemy extends PureComponent {
   componentWillUnmount() {
     this.xyTranslate.removeAllListeners();
 
-    if (this.wait) {
+    if (this.waitTimeout) {
       clearTimeout(this.wait);
     }
   }
@@ -130,12 +130,12 @@ export default class Enemy extends PureComponent {
         easing: Easing.linear,
         useNativeDriver: true,
         ...config,
-      }).start(() => this.startNextAiRoutine());
+      }).start(({ finished }) => { if (finished) { this.startNextAiRoutine() }});
     });
   }
 
   wait = (ms = 1000) => {
-    this.wait = setTimeout(() => this.startNextAiRoutine(), ms);
+    this.waitTimeout = setTimeout(() => this.startNextAiRoutine(), ms);
   }
 
   render() {

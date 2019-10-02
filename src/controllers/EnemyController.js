@@ -1,9 +1,10 @@
 import React, { PureComponent } from "react";
 import PropTypes from "prop-types";
 import UniqueString from "uuid/v1";
+import { isFinite as isNumber } from "lodash";
 
-import { MAX_X, MAX_Y, LONG_DIAGONAL_LENGTH } from "~/constants/dimensions";
-import { Dropper } from "#/enemies";
+// import { MAX_X, MAX_Y, LONG_DIAGONAL_LENGTH } from "~/constants/dimensions";
+import StageData from "~stageData/stage01";
 
 export default class EnemyController extends PureComponent {
   static propTypes = {
@@ -16,17 +17,44 @@ export default class EnemyController extends PureComponent {
     spawnBullet: PropTypes.func.isRequired,
   }
 
-  state = { enemies: [
-    { key: "aaa", Component: Dropper, initialX: MAX_X * -0.4 },
-    { key: "bbb", Component: Dropper, initialX: MAX_X * -0.5 },
-    { key: "ccc", Component: Dropper, initialX: MAX_X * -0.6 },
-  ]}
+  state = {
+    enemies: []
+  }
+
+  componentDidMount() {
+    this.readStageData();
+
+    if (this.waitTimeout) {
+      clearTimeout(this.wait);
+    }
+  }
+
+  readStageData = (i = 0) => {
+    // console.log(`readStageData called with i=${i}`);
+
+    if (i < StageData.length) {
+      const currentRow = StageData[i];
+
+      if (isNumber(currentRow)) {
+        // console.log(`row is number, waiting for ${currentRow}ms`);
+        this.waitTimeout = setTimeout(() => this.readStageData(i + 1), currentRow);
+
+      } else {
+        // console.log("will spawn enemy:", currentRow);
+        this.spawn([currentRow]);
+        this.readStageData(i + 1);
+      }
+
+    } else {
+      this.setState({ stageDataIndex: i });
+    }
+  }
 
   spawn = (newEnemies = []) => {
-    this.setState({ bullets: [ ...this.state.bullets, ...[].concat(newEnemies).map(({
+    this.setState({ enemies: [ ...this.state.enemies, ...[].concat(newEnemies).map(({
       Component = Dropper,
       ...rest
-    }) => ({ key: UniqueString(), type, ...rest }))]});
+    }) => ({ key: UniqueString(), Component, ...rest }))]});
   }
 
   despawn = key => {
