@@ -10,4 +10,4 @@ export const MAX_Y = vh((PLAY_AREA_HEIGHT_VH/2));
 export const MAX_X_PLAYER = vw((PLAY_AREA_WIDTH_VW/2));
 export const MAX_Y_PLAYER = vh((PLAY_AREA_HEIGHT_VH/2));
 
-export const PLAYER_HITBOX_SIZE = vh(1.5);
+export const PLAYER_HITBOX_SIZE = vh(2);

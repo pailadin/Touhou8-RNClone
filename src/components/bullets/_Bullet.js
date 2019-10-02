@@ -7,7 +7,8 @@ import { intersect, distance } from "mathjs"
 
 import { MAX_X, MAX_Y, LONG_DIAGONAL_LENGTH } from "~/constants/dimensions";
 import SPECIAL_XY_VALUES from "~/constants/bulletSpecialXYValues";
-import { getRandomX, getRandomY } from "~/utils/randomXY"
+import { calculateDuration } from "~/utils/pathing";
+import { getRandomX, getRandomY } from "~/utils/xy";
 
 const INNER_RADIUS = vh(1.5);
 const OUTER_RADIUS = INNER_RADIUS + vh(2);
@@ -200,20 +201,13 @@ export default class Bullet extends Component {
   componentWillUnmount() {
     this.xyTranslate.removeAllListeners();
   }
-  
+
   componentDidMount() {
     this.animate();
   }
 
-  calculateDuration = (startXY, endXY, speed = 0.2) => {
-    const { x: startX = 0, y: startY = 0 } = startXY;
-    const { x: endX = 0, y: endY = 0 } = endXY;
-
-    return distance([startX, startY], [endX, endY]) / speed;
-  }
-
   animate = () => {
-    const duration = this.calculateDuration({
+    const duration = calculateDuration({
       x: this.props.fromX,
       y: this.props.fromY
     }, {
@@ -221,15 +215,6 @@ export default class Bullet extends Component {
       y: this.state.toY
     });
 
-    // console.log("ANIMATE:", {
-    //   id: this.props.id,
-    //   fromX: this.props.fromX,
-    //   fromY: this.props.fromY,
-    //   toX: this.state.toX,
-    //   toY: this.state.toY,
-    //   duration,
-    // })
-    
     Animated.timing(this.xyTranslate, {
       toValue: 1,
       duration: duration,
@@ -239,7 +224,7 @@ export default class Bullet extends Component {
   }
 
   shouldComponentUpdate = () => false
-  
+
   render() {
     const translateX = this.xyTranslate.x.interpolate({
       inputRange: [0, 1],

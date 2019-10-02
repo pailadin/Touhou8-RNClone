@@ -6,7 +6,7 @@ import { vw, vh } from "react-native-expo-viewport-units";
 import { MAX_X, MAX_Y, MAX_X_PLAYER, MAX_Y_PLAYER, PLAYER_HITBOX_SIZE as HITBOX_SIZE } from "~/constants/dimensions";
 const PLAYER_IMAGE = require("$/sprites/Player.gif")
 
-const CONTROL_RADIUS = vh(25);
+const CONTROL_RADIUS = vh(35);
 
 const styles = StyleSheet.create({
   container: {
@@ -23,6 +23,7 @@ const styles = StyleSheet.create({
   },
   image: {
     position: "absolute",
+    transform: ([{ scaleX: 1.5 }, { scaleY: 1.5 }]),
     zIndex: 2001,
   },
   hitbox: {

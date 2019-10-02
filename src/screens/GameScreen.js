@@ -4,6 +4,7 @@ import { vw, vh } from "react-native-expo-viewport-units";
 
 import Player from "#/Player";
 import BulletController from "~/controllers/BulletController";
+import EnemyController from "~/controllers/EnemyController";
 import { PLAY_AREA_HEIGHT_VH, PLAY_AREA_WIDTH_VW, MAX_X, MAX_Y, MAX_X_PLAYER, MAX_Y_PLAYER, PLAYER_HITBOX_SIZE } from "~/constants/dimensions";
 import STAGE_INTRO from "$/music/th08_02-intro.mp3";
 import STAGE_LOOP from "$/music/th08_02-loop.mp3";
@@ -64,20 +65,18 @@ export default class GameScreen extends PureComponent {
       <View style={styles.container}>
         <Player
           updatePlayerLocation={this.updatePlayerLocation}
-          render={playerState => {
-            // console.log("playerState:", playerState);
-            
-            return (
-              <View style={styles.playarea}>
-                {/* <Button
-                  title="Change track"
-                  onPress={this.toggleMusicTest}
-                /> */}
+          render={playerState => (
+            <View style={styles.playarea}>
+              {/* <Button
+                title="Change track"
+                onPress={this.toggleMusicTest}
+              /> */}
 
-                <BulletController {...playerState}  />
-              </View>
-            )
-          }}
+              <BulletController {...playerState} render={({spawnBullet}) => (
+                <EnemyController {...playerState} spawnBullet={spawnBullet} />
+              )}/>
+            </View>
+          )}
         />
       </View>
     )

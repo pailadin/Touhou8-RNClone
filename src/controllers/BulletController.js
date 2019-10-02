@@ -18,14 +18,6 @@ export default class BulletController extends PureComponent {
 
   state = { bullets: [] }
 
-  componentDidMount() {
-    this.spawn([
-      { type: BULLET_TYPES.random },
-      { type: BULLET_TYPES.aimedAtPlayer },
-      { type: BULLET_TYPES.aimedAtBottom },
-    ])
-  }
-
   // TODO setState is async. Maybe will not work well if multiple spawns occur at the same time.
   spawn = (newBullets = []) => {
     this.setState({ bullets: [ ...this.state.bullets, ...[].concat(newBullets).map(({
@@ -44,7 +36,7 @@ export default class BulletController extends PureComponent {
     }
   }
 
-  renderBullets = () => {    
+  renderBullets = () => {
     return this.state.bullets.map(({ key, type, ...rest }) => {
       const Component = get(Bullets, type, Bullets[BULLET_TYPES.random]);
 
@@ -65,14 +57,14 @@ export default class BulletController extends PureComponent {
     });
   }
 
-  render() {    
+  render() {
     return (
       <>
         {this.renderBullets()}
 
         {this.props.render && this.props.render({
           ...this.props,
-          spawnBullet: spawn,
+          spawnBullet: this.spawn,
         })}
       </>
     )
