@@ -3,7 +3,8 @@ import PropTypes from "prop-types";
 import UniqueString from "uuid/v1";
 import { isFinite as isNumber } from "lodash";
 
-import StageData from "~stageData/stage01";
+import StageData from "~/stageData/stage01";
+import { Dropper as DEFAULT_ENEMY } from "#/enemies"
 
 export default class EnemyController extends PureComponent {
   static propTypes = {
@@ -14,6 +15,7 @@ export default class EnemyController extends PureComponent {
     playerTop: PropTypes.number.isRequired,
     playerBottom: PropTypes.number.isRequired,
     spawnBullet: PropTypes.func.isRequired,
+    startBossMusic: PropTypes.func.isRequired,
   }
 
   state = {
@@ -29,29 +31,27 @@ export default class EnemyController extends PureComponent {
   }
 
   readStageData = (i = 0) => {
-    // console.log(`readStageData called with i=${i}`);
-
     if (i < StageData.length) {
       const currentRow = StageData[i];
 
       if (isNumber(currentRow)) {
-        // console.log(`row is number, waiting for ${currentRow}ms`);
         this.waitTimeout = setTimeout(() => this.readStageData(i + 1), currentRow);
 
       } else {
-        // console.log("will spawn enemy:", currentRow);
         this.spawn([currentRow]);
         this.readStageData(i + 1);
       }
 
     } else {
       this.setState({ stageDataIndex: i });
+
+      this.props.startBossMusic();
     }
   }
 
   spawn = (newEnemies = []) => {
     this.setState({ enemies: [ ...this.state.enemies, ...[].concat(newEnemies).map(({
-      Component = Dropper,
+      Component = DEFAULT_ENEMY,
       ...rest
     }) => ({ key: UniqueString(), Component, ...rest }))]});
   }
