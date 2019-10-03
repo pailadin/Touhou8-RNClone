@@ -12,24 +12,30 @@ export default class Shotgunner extends PureComponent {
   static propTypes = {
     initialX: PropTypes.number.isRequired,
     spawnBullet: PropTypes.func.isRequired,
-    useRedBullets: PropTypes.bool,
+    useRedBullet: PropTypes.bool,
   }
 
   static defaultProps = {
-    useRedBullets: true,
+    useRedBullet: true,
   }
 
   shootAround = (next, { x, y }) => {
-    const config = { type: BULLET_TYPES.shotgunnerAround, fromX: x, fromY: y, useRedBullets: this.props.useRedBullets };
-    this.props.spawnBullet({ ...config, toX: -MAX_X, toY: y });
-    this.props.spawnBullet({ ...config, toX: MAX_X, toY: y });
-    this.props.spawnBullet({ ...config, toX: x, toY: MAX_Y });
-    this.props.spawnBullet({ ...config, toX: x, toY: -MAX_Y });
-
-    this.props.spawnBullet({ ...config, toX: x + 32, toY: y + 32 });
-    this.props.spawnBullet({ ...config, toX: x - 32, toY: y + 32 });
-    this.props.spawnBullet({ ...config, toX: x + 32, toY: y - 32 });
-    this.props.spawnBullet({ ...config, toX: x - 32, toY: y - 32 });
+    this.props.spawnBullet([
+      { toX: -MAX_X, toY: y },
+      { toX: MAX_X, toY: y },
+      { toX: x, toY: MAX_Y },
+      { toX: x, toY: -MAX_Y },
+      { toX: x + 32, toY: y + 32 },
+      { toX: x + 32, toY: y - 32 },
+      { toX: x - 32, toY: y + 32 },
+      { toX: x - 32, toY: y - 32 },
+    ].map(config => ({
+      ...config,
+      type: BULLET_TYPES.shotgunnerAround,
+      fromX: x,
+      fromY: y,
+      useRedBullet: this.props.useRedBullet,
+    })));
 
     next();
   }
@@ -42,11 +48,15 @@ export default class Shotgunner extends PureComponent {
   })
 
   shootAtPlayer = (next, props) => {
-    const config= { type: BULLET_TYPES.shotgunnerAimed, useRedBullets: this.props.useRedBullets };
-
-    this.props.spawnBullet({ ...config, ...this.getXYForShootingAtPlayer(props) });
-    this.props.spawnBullet({ ...config, ...this.getXYForShootingAtPlayer(props, 10) });
-    this.props.spawnBullet({ ...config, ...this.getXYForShootingAtPlayer(props, -10) });
+    this.props.spawnBullet([
+      { ...this.getXYForShootingAtPlayer(props) },
+      { ...this.getXYForShootingAtPlayer(props, 10) },
+      { ...this.getXYForShootingAtPlayer(props, -10) },
+    ].map(config => ({
+      ...config,
+      type: BULLET_TYPES.shotgunnerAimed,
+      useRedBullet: this.props.useRedBullet
+    })));
 
     next();
   }

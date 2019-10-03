@@ -1,4 +1,4 @@
-import { Dropper, Shotgunner } from "#/enemies";
+import { Dropper, Shotgunner, Boss1 } from "#/enemies";
 import { MAX_X } from "~/constants/dimensions";
 
 const generateDropperGroup = (left = true, amount = 6, {
@@ -42,9 +42,9 @@ export default [
   ...generateDropperGroup(false, 6, 0.2),
   3000,
   { Component: Shotgunner, initialX: -MAX_X * 0.6 },
-  { Component: Shotgunner, initialX: MAX_X * 0.6, useRedBullets: false },
+  { Component: Shotgunner, initialX: MAX_X * 0.6, useRedBullet: false },
   6000,
-  { Component: Shotgunner, initialX: -MAX_X * 0.6, useRedBullets: false },
+  { Component: Shotgunner, initialX: -MAX_X * 0.6, useRedBullet: false },
   { Component: Shotgunner, initialX: MAX_X * 0.6 },
   3000,
   ...generateDropperGroup(true, 6, 0.8, { reverseIncrement: true }),
@@ -58,7 +58,7 @@ export default [
   5000,
   // Mini-boss here
   // 20000,
-  { Component: Shotgunner, initialX: -MAX_X * 0.6, useRedBullets: false },
+  { Component: Shotgunner, initialX: -MAX_X * 0.6, useRedBullet: false },
   2000,
   { Component: Shotgunner, initialX: -MAX_X * 0.6 },
   ...generateDropperGroup(false, 6, 0.3),
@@ -70,6 +70,8 @@ export default [
   ...generateDropperGroup(true, 6, 0.3),
   ...generateDropperGroup(false, 6, 0.3),
   1000,
-  { Component: Shotgunner, initialX: MAX_X * 0.6, useRedBullets: false },
-  { Component: Shotgunner, initialX: -MAX_X * 0.6, useRedBullets: false },
+  { Component: Shotgunner, initialX: MAX_X * 0.6, useRedBullet: false },
+  { Component: Shotgunner, initialX: -MAX_X * 0.6, useRedBullet: false },
+  8000,
+  { Component: Boss1, initialX: 0 }
 ]

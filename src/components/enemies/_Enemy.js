@@ -58,7 +58,7 @@ export default class Enemy extends PureComponent {
     this.xyTranslate = new Animated.ValueXY();
 
     this.state = {
-      aiIndex: -1,
+      aiIndex: 0,
       fromX: props.initialX,
       fromY: props.initialY,
       toX: props.initialX,
@@ -80,29 +80,34 @@ export default class Enemy extends PureComponent {
   }
 
   startNextAiRoutine = () => {
-    let { aiIndex } = this.state;
+    let { aiIndex: i } = this.state;
 
-    if (++aiIndex < this.props.aiRoutines.length) {
-      this.setState({ aiIndex });
-
-      if (_.isFunction(this.props.aiRoutines[aiIndex])) {
-        this.props.aiRoutines[aiIndex](this.startNextAiRoutine, {
-          ...this.state,
-          x: this.state.toX,
-          y: this.state.toY,
-          playerX: this.props.playerX,
-          playerY: this.props.playerY,
-        });
+    if (i < this.props.aiRoutines.length) {
+      if (_.isFunction(this.props.aiRoutines[i])) {
+        this.setState({ aiIndex: i + 1 }, () =>
+          this.props.aiRoutines[i](this.startNextAiRoutine, {
+            ...this.state,
+            x: this.state.toX,
+            y: this.state.toY,
+            playerX: this.props.playerX,
+            playerY: this.props.playerY,
+          })
+        );
 
       } else {
-        const [action, details] = this.props.aiRoutines[aiIndex];
+        const [action, details] = this.props.aiRoutines[i];
 
         if (action === ENEMY_AI_ACTIONS.move) {
-          this.move(details);
+          this.setState({ aiIndex: i + 1 }, () => this.move(details));
+
         } else if (action === ENEMY_AI_ACTIONS.wait) {
-          this.wait(details);
-        } else {
-          this.props.despawn(this.props.id); // Just in case
+          this.setState({ aiIndex: i + 1 }, () => this.wait(details));
+
+        } else if (action === ENEMY_AI_ACTIONS.gotoAction) {
+          this.setState({ aiIndex: details || 0 }, this.startNextAiRoutine);
+
+        } else { // Skip invalid actions
+          this.setState({ aiIndex: i + 1 }, this.startNextAiRoutine);
         }
       }
     } else {
@@ -140,7 +145,7 @@ export default class Enemy extends PureComponent {
   }
 
   wait = (ms = 1000) => {
-    this.waitTimeout = setTimeout(() => this.startNextAiRoutine(), ms);
+    this.waitTimeout = setTimeout(this.startNextAiRoutine, ms);
   }
 
   render() {

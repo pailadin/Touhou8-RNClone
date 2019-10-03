@@ -16,6 +16,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 3000,
   },
   inner: {
     backgroundColor: "white",
@@ -23,11 +24,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 3001,
   },
   hitbox: {
     backgroundColor: "transparent",
     position: "absolute",
-    zIndex: 1000,
+    zIndex: 3002,
   }
 });
 

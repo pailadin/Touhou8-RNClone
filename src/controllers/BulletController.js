@@ -18,7 +18,6 @@ export default class BulletController extends PureComponent {
 
   state = { bullets: [] }
 
-  // TODO setState is async. Maybe will not work well if multiple spawns occur at the same time.
   spawn = (newBullets = []) => {
     this.setState({ bullets: [ ...this.state.bullets, ...[].concat(newBullets).map(({
       type = BULLET_TYPES.random,
