@@ -1,25 +1,17 @@
 import React, { Component } from "react"
 import { Animated, Button, Easing, Image, PanResponder, StyleSheet, Text, View } from "react-native";
 import PropTypes from "prop-types";
-import { vw, vh } from "react-native-expo-viewport-units";
 import _ from "lodash";
 import { intersect, distance } from "mathjs"
 
 import { MAX_X, MAX_Y, LONG_DIAGONAL_LENGTH } from "~/constants/dimensions";
+import DEFAULT_BULLET_SIZE from "~/constants/bulletDefaultSizes";
 import SPECIAL_XY_VALUES from "~/constants/bulletSpecialXYValues";
 import { calculateDuration } from "~/utils/pathing";
-import { getRandomX, getRandomY } from "~/utils/xy";
-
-const INNER_RADIUS = vh(1.5);
-const OUTER_RADIUS = INNER_RADIUS + vh(2);
-const HITBOX_SIZE = vh(1.5);
 
 const styles = StyleSheet.create({
   outer: {
     backgroundColor: "blue",
-    width: OUTER_RADIUS,
-    height: OUTER_RADIUS,
-    borderRadius: OUTER_RADIUS,
     position: "absolute",
     flex: 1,
     alignItems: "center",
@@ -27,9 +19,6 @@ const styles = StyleSheet.create({
   },
   inner: {
     backgroundColor: "white",
-    width: INNER_RADIUS,
-    height: INNER_RADIUS,
-    borderRadius: INNER_RADIUS,
     position: "absolute",
     flex: 1,
     alignItems: "center",
@@ -38,8 +27,6 @@ const styles = StyleSheet.create({
   hitbox: {
     backgroundColor: "transparent",
     position: "absolute",
-    width: HITBOX_SIZE,
-    height: HITBOX_SIZE,
     zIndex: 1000,
   }
 });
@@ -58,7 +45,7 @@ const calculateToXY = ({
     if (toX === SPECIAL_XY_VALUES.player) {
       toX = initialPlayerX;
     } else {
-      toX = getRandomX();
+      toX = fromX;//getRandomX();
     }
   }
 
@@ -68,7 +55,7 @@ const calculateToXY = ({
     if (toY === SPECIAL_XY_VALUES.player) {
       toY = initialPlayerY;
     } else {
-      toY = getRandomY();
+      toY = fromY;//getRandomY();
     }
   }
 
@@ -76,17 +63,26 @@ const calculateToXY = ({
   const startingXY = [fromX, fromY];
   const endingXY = [toX, toY];
   const currentLineSegment = [startingXY, endingXY];
+  let topIntersection, bottomIntersection, leftIntersection, rightIntersection;
   let topDistance, bottomDistance, leftDistance, rightDistance;
 
-  const topIntersection = intersect(...currentLineSegment, [-LONG_DIAGONAL_LENGTH, -MAX_Y], [LONG_DIAGONAL_LENGTH, -MAX_Y]);
-  const bottomIntersection = intersect(...currentLineSegment, [-LONG_DIAGONAL_LENGTH, MAX_Y], [LONG_DIAGONAL_LENGTH, MAX_Y]);
-  const leftIntersection = intersect(...currentLineSegment, [-MAX_X, -LONG_DIAGONAL_LENGTH], [-MAX_X, LONG_DIAGONAL_LENGTH]);
-  const rightIntersection = intersect(...currentLineSegment, [MAX_X, -LONG_DIAGONAL_LENGTH], [MAX_X, LONG_DIAGONAL_LENGTH]);
+  if (toY > fromY) { // Going down?
+    bottomIntersection = intersect(...currentLineSegment, [-LONG_DIAGONAL_LENGTH, MAX_Y], [LONG_DIAGONAL_LENGTH, MAX_Y]);
+    if (bottomIntersection) bottomDistance = distance(endingXY, bottomIntersection);
 
-  if (topIntersection) topDistance = distance(endingXY, topIntersection);
-  if (bottomIntersection) bottomDistance = distance(endingXY, bottomIntersection);
-  if (leftIntersection) leftDistance = distance(endingXY, leftIntersection);
-  if (rightIntersection) rightDistance = distance(endingXY, rightIntersection);
+  } else if (toY < fromY) {
+    topIntersection = intersect(...currentLineSegment, [-LONG_DIAGONAL_LENGTH, -MAX_Y], [LONG_DIAGONAL_LENGTH, -MAX_Y]);
+    if (topIntersection) topDistance = distance(endingXY, topIntersection);
+  }
+
+  if (toX > fromX) { // Going right?
+    rightIntersection = intersect(...currentLineSegment, [MAX_X, -LONG_DIAGONAL_LENGTH], [MAX_X, LONG_DIAGONAL_LENGTH]);
+    if (rightIntersection) rightDistance = distance(endingXY, rightIntersection);
+
+  } else if (toX < fromX) {
+    leftIntersection = intersect(...currentLineSegment, [-MAX_X, -LONG_DIAGONAL_LENGTH], [-MAX_X, LONG_DIAGONAL_LENGTH]);
+    if (leftIntersection) leftDistance = distance(endingXY, leftIntersection);
+  }
 
   const playerXY = _.get(
     _.sortBy([
@@ -110,9 +106,13 @@ export default class Bullet extends Component {
     // If not aiming at the player, pass at least ONE point on an edge for best results:
     toX: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), // Reminder: Use state version of this:
     toY: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), // Reminder: Use state version of this.
+    speed: PropTypes.number,
     outerColor: PropTypes.string,
     innerColor: PropTypes.string,
     hitboxColor: PropTypes.string,
+    outerSize: PropTypes.number,
+    innerSize: PropTypes.number,
+    hitboxSize: PropTypes.number,
     playerX: PropTypes.number.isRequired,
     playerY: PropTypes.number.isRequired,
     playerLeft: PropTypes.number.isRequired,
@@ -128,6 +128,9 @@ export default class Bullet extends Component {
     outerColor: "blue",
     innerColor: "white",
     hitboxColor: "transparent",
+    innerSize: DEFAULT_BULLET_SIZE.inner,
+    outerSize: DEFAULT_BULLET_SIZE.outer,
+    hitboxSize: DEFAULT_BULLET_SIZE.hitbox,
   }
 
   constructor(props) {
@@ -154,16 +157,16 @@ export default class Bullet extends Component {
   }
 
   checkForCollision({ x, y }) {
-    const { playerLeft, playerRight, playerTop, playerBottom } = this.props;
+    const { playerLeft, playerRight, playerTop, playerBottom, hitboxSize } = this.props;
 
-    const HALF_HITBOX_SIZE = (HITBOX_SIZE / 2);
+    const halfHitboxSize = (hitboxSize / 2);
     const actualXPos = (x * MAX_X);
     const actualYPos = (y * MAX_Y);
 
-    const BULLET_X_START = actualXPos - HALF_HITBOX_SIZE;
-    const BULLET_X_END = actualXPos + HALF_HITBOX_SIZE;
-    const BULLET_Y_START = actualYPos - HALF_HITBOX_SIZE;
-    const BULLET_Y_END = actualYPos + HALF_HITBOX_SIZE;
+    const BULLET_X_START = actualXPos - halfHitboxSize;
+    const BULLET_X_END = actualXPos + halfHitboxSize;
+    const BULLET_Y_START = actualYPos - halfHitboxSize;
+    const BULLET_Y_END = actualYPos + halfHitboxSize;
 
     // const DELETE_MESSAGE = (message = "COLLISION") => console.log(`${message}:`, {
     //   id: this.props.id,
@@ -213,7 +216,7 @@ export default class Bullet extends Component {
     }, {
       x: this.state.toX,
       y: this.state.toY
-    });
+    }, this.props.speed);
 
     Animated.timing(this.xyTranslate, {
       toValue: 1,
@@ -224,6 +227,32 @@ export default class Bullet extends Component {
   }
 
   shouldComponentUpdate = () => false
+
+  getOuterStyles = (translateStyle = {}) => [
+    styles.outer, translateStyle, {
+      backgroundColor: this.props.outerColor,
+      width: this.props.outerSize,
+      height: this.props.outerSize,
+      borderRadius: this.props.outerSize,
+    }
+  ]
+
+  getInnerStyles = () => [
+    styles.inner, {
+      backgroundColor: this.props.innerColor,
+      width: this.props.innerSize,
+      height: this.props.innerSize,
+      borderRadius: this.props.innerSize,
+    }
+  ]
+
+  getHitboxStyles = () => [
+    styles.hitbox, {
+      backgroundColor: this.props.hitboxColor,
+      width: this.props.hitboxSize,
+      height: this.props.hitboxSize,
+    }
+  ]
 
   render() {
     const translateX = this.xyTranslate.x.interpolate({
@@ -236,28 +265,10 @@ export default class Bullet extends Component {
       outputRange: [this.props.fromY, this.state.toY],
     });
 
-    // console.log("render:", {
-    //   id: this.props.id,
-    //   fromX: this.props.fromX,
-    //   fromY: this.props.fromY,
-    //   toX: this.state.toX,
-    //   toY: this.state.toY,
-    //   translateX,
-    //   translateY,
-    // })
-
-    const translateStyle = { transform: [{ translateX }, { translateY }] };
-
     return (
-      <Animated.View
-        style={[
-          styles.outer,
-          translateStyle,
-          { backgroundColor: this.props.outerColor }
-        ]}
-      >
-        <View style={[styles.inner, { backgroundColor: this.props.innerColor }]}>
-          <View style={[styles.hitbox, { backgroundColor: this.props.hitboxColor }]} />
+      <Animated.View style={this.getOuterStyles({ transform: [{ translateX }, { translateY } ] })}>
+        <View style={this.getInnerStyles()}>
+          <View style={this.getHitboxStyles()} />
         </View>
       </Animated.View>
     );

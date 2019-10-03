@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import UniqueString from "uuid/v1";
 import { isFinite as isNumber } from "lodash";
 
-// import { MAX_X, MAX_Y, LONG_DIAGONAL_LENGTH } from "~/constants/dimensions";
 import StageData from "~stageData/stage01";
 
 export default class EnemyController extends PureComponent {

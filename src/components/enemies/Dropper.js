@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 
 import Enemy from "#/enemies/_Enemy";
 import BULLET_TYPES from "~/constants/bulletTypes"
-import { MAX_X, MAX_Y } from "~/constants/dimensions";
+import { MAX_Y } from "~/constants/dimensions";
 import ENEMY_AI_ACTIONS from "~/constants/enemyAiActions";
 import { getRandomXOffset, getRandomXOffsetAbs, getRandomYOffset } from "~/utils/xy";
 
@@ -32,7 +32,6 @@ export default class Dropper extends PureComponent {
         toY: 0 + getRandomYOffset(),
       }],
       this.shootAtPlayer,
-      // [ENEMY_AI_ACTIONS.wait, 100],
       [ENEMY_AI_ACTIONS.move, {
         toX: initialX + getRandomXOffset(),
         toY: -MAX_Y,

@@ -1,7 +1,6 @@
 import Dropper from "./Dropper";
+import Shotgunner from "./Shotgunner";
 
-export { Dropper };
+export { Dropper, Shotgunner };
 
-export default {
-  Dropper
-};
+export default { Dropper, Shotgunner };

@@ -1,7 +1,6 @@
 import React, { PureComponent } from "react"
 import { Animated, Button, Easing, Image, PanResponder, StyleSheet, Text, View } from "react-native";
 import PropTypes from "prop-types";
-import { vh } from "react-native-expo-viewport-units";
 import _ from "lodash";
 
 import { MAX_Y } from "~/constants/dimensions";
@@ -33,6 +32,7 @@ export default class Enemy extends PureComponent {
     outerColor: PropTypes.string,
     innerColor: PropTypes.string,
     hitboxColor: PropTypes.string,
+    sprite: PropTypes.any,
     playerX: PropTypes.number.isRequired,
     playerY: PropTypes.number.isRequired,
     playerLeft: PropTypes.number.isRequired,
@@ -49,6 +49,7 @@ export default class Enemy extends PureComponent {
     outerColor: "blue",
     innerColor: "white",
     hitboxColor: "transparent",
+    sprite: DEFAULT_IMAGE,
   }
 
   constructor(props) {
@@ -87,6 +88,10 @@ export default class Enemy extends PureComponent {
       if (_.isFunction(this.props.aiRoutines[aiIndex])) {
         this.props.aiRoutines[aiIndex](this.startNextAiRoutine, {
           ...this.state,
+          x: this.state.toX,
+          y: this.state.toY,
+          playerX: this.props.playerX,
+          playerY: this.props.playerY,
         });
 
       } else {
@@ -108,8 +113,8 @@ export default class Enemy extends PureComponent {
   move = ({
     fromX = this.state.toX,
     fromY = this.state.toY,
-    toX,
-    toY,
+    toX = this.state.toX,
+    toY = this.state.toY,
     speed = 0.2,
     config = {}
   }) => {
@@ -158,7 +163,7 @@ export default class Enemy extends PureComponent {
           translateStyle,
         ]}
       >
-        <Image source={DEFAULT_IMAGE} style={styles.image} resizeMode={"contain"} />
+        <Image source={this.props.sprite} style={styles.image} resizeMode={"contain"} />
       </Animated.View>
     );
   }
